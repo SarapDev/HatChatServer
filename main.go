@@ -3,5 +3,12 @@ package main
 import "fmt"
 
 func main()  {
-	fmt.Println("websocket chat")
+	randomMap := make(map[string]string)
+
+	randomMap["key"] = "value"
+
+	_, ok := randomMap["notExist"]
+	val, exist := randomMap["key"]
+
+	fmt.Println(ok, exist, val)
 }
