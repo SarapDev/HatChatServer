@@ -4,8 +4,8 @@ import "github.com/google/uuid"
 
 type Room struct {
 	id uuid.UUID
-	users map[*User]bool
-	register   chan *User
+	users        map[*User]bool
+	Register     chan *User
 	disconnected chan *User
 	unregister chan *User
 	broadcast chan *Message
@@ -13,19 +13,19 @@ type Room struct {
 
 func NewRoom() *Room {
 	return &Room{
-		id: uuid.New(),
-		users: make(map[*User]bool),
-		register:   make(chan *User),
+		id:           uuid.New(),
+		users:        make(map[*User]bool),
+		Register:     make(chan *User),
 		disconnected: make(chan *User),
-		unregister: make(chan *User),
-		broadcast: make(chan *Message),
+		unregister:   make(chan *User),
+		broadcast:    make(chan *Message),
 	}
 }
 
 func (room *Room) runRoom ()  {
 	for {
 		select {
-		case user := <- room.register:
+		case user := <- room.Register:
 			room.registerUserInRoom(user)
 		case user := <- room.disconnected:
 			room.disconnectUserFromRoom(user)
@@ -53,7 +53,7 @@ func (room *Room) disconnectUserFromRoom (user *User) {
 	}
 }
 
-func (room *Room) broadcastMessageToRoom(message []byte) {
+func (room *Room) broadcastMessageToRoom(message *Message) {
 	for user := range room.users {
 		user.send <- message
 	}
