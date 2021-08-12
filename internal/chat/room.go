@@ -1,6 +1,8 @@
 package chat
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 type Room struct {
 	id uuid.UUID
@@ -22,7 +24,7 @@ func NewRoom() *Room {
 	}
 }
 
-func (room *Room) runRoom ()  {
+func (room *Room) RunRoom ()  {
 	for {
 		select {
 		case user := <- room.Register:

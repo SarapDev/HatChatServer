@@ -26,15 +26,17 @@ func NewWsServer (w http.ResponseWriter, r *http.Request, room *chat.Room) *WsSe
 	}
 }
 
-func (ws *WsServer) Serve (room *chat.Room) {
+func (ws *WsServer) Serve () {
 	conn, err := ws.upgrade.Upgrade(ws.writer, ws.request, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	user := chat.NewUser(conn, room)
+	user := chat.NewUser(conn, ws.room)
 	user.Room.Register <- user
+
+	log.Println("Run Server")
 
 	go user.ReadMessage()
 	go user.SendMessage()
