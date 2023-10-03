@@ -1,6 +1,8 @@
 package chat
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"log"
@@ -18,22 +20,24 @@ const (
 )
 
 type User struct {
-	id uuid.UUID
-	conn *websocket.Conn
-	send chan *Message
-	Room *Room
+	id       uuid.UUID
+	conn     *websocket.Conn
+	send     chan *Message
+	Nickname string
+	Room     *Room
 }
 
-func NewUser(conn *websocket.Conn, room *Room) *User {
+func NewUser(conn *websocket.Conn, room *Room, nickname string) *User {
 	return &User{
-		id:   uuid.New(),
-		conn: conn,
-		send: make(chan *Message),
-		Room: room,
+		id:       uuid.New(),
+		conn:     conn,
+		send:     make(chan *Message),
+		Nickname: nickname,
+		Room:     room,
 	}
 }
 
-func (u *User) SendMessage () {
+func (u *User) SendMessage() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -63,7 +67,17 @@ func (u *User) SendMessage () {
 				return
 			}
 
-			_, err = w.Write(message.Text)
+			jsonMessage := JsonMessage{
+				Sender: message.from.Nickname,
+				Text:   string(message.Text),
+			}
+
+			res, err := json.Marshal(jsonMessage)
+			if err != nil {
+				fmt.Printf("Ошибка упаковки сообщения в json. Ошибка %s", err)
+			}
+
+			_, err = w.Write(res)
 			if err != nil {
 				return
 			}
@@ -89,14 +103,14 @@ func (u *User) SendMessage () {
 	}
 }
 
-func (u *User) ReadMessage () {
-	defer func () {
+func (u *User) ReadMessage() {
+	defer func() {
 		u.Room.unregister <- u
 		err := u.conn.Close()
 		if err != nil {
 			return
 		}
-	} ()
+	}()
 
 	u.conn.SetReadLimit(maxMessageSize)
 
@@ -105,7 +119,7 @@ func (u *User) ReadMessage () {
 		return
 	}
 
-	u.conn.SetPongHandler(func (string) error {
+	u.conn.SetPongHandler(func(string) error {
 		err := u.conn.SetReadDeadline(time.Now().Add(pongWait))
 		if err != nil {
 			return err
@@ -122,7 +136,15 @@ func (u *User) ReadMessage () {
 			break
 		}
 
-		messageStruct := NewMessage(message, u)
+		var jsonMessage JsonMessage
+		err = json.Unmarshal(message, &jsonMessage)
+		if err != nil {
+			log.Printf("Ошибка парсинга сообщения. Ошибка %s", err)
+		}
+
+		messageStruct := NewMessage(jsonMessage, u)
 		u.Room.broadcast <- messageStruct
+
+		log.Printf("message: %s, from: %s", messageStruct.Text, u.Nickname)
 	}
 }

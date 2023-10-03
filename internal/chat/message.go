@@ -1,20 +1,25 @@
 package chat
 
-import "bytes"
+import "strings"
 
 type Message struct {
 	from *User
-	Text [] byte
+	Text []byte
+}
+
+type JsonMessage struct {
+	Sender string `json:"sender"`
+	Text   string `json:"text"`
 }
 
 var (
 	newline = []byte{'\n'}
-	space 	= []byte{' '}
+	space   = []byte{' '}
 )
 
-func NewMessage (message []byte, user *User) *Message {
+func NewMessage(message JsonMessage, user *User) *Message {
 	return &Message{
 		from: user,
-		Text: bytes.TrimSpace(bytes.Replace(message, newline, space, -1)),
+		Text: []byte(strings.TrimSpace(strings.Replace(message.Text, string(newline), string(space), -1))),
 	}
 }

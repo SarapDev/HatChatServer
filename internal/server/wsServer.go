@@ -9,34 +9,44 @@ import (
 
 type WsServer struct {
 	upgrade websocket.Upgrader
-	room *chat.Room
-	writer http.ResponseWriter
+	room    *chat.Room
+	writer  http.ResponseWriter
 	request *http.Request
 }
 
-func NewWsServer (w http.ResponseWriter, r *http.Request, room *chat.Room) *WsServer {
+func NewWsServer(w http.ResponseWriter, r *http.Request, room *chat.Room) *WsServer {
 	return &WsServer{
 		upgrade: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
 		},
-		room: room,
-		writer: w,
+		room:    room,
+		writer:  w,
 		request: r,
 	}
 }
 
-func (ws *WsServer) Serve () {
+func (ws *WsServer) Serve() {
 	conn, err := ws.upgrade.Upgrade(ws.writer, ws.request, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	user := chat.NewUser(conn, ws.room)
+	_, usernameMsg, err := conn.ReadMessage()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	user := chat.NewUser(conn, ws.room, string(usernameMsg))
 	user.Room.Register <- user
 
 	log.Println("Run Server")
+	log.Println(user.Nickname)
 
 	go user.ReadMessage()
 	go user.SendMessage()
