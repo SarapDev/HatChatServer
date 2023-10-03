@@ -6,6 +6,5 @@ It's simple GoLang websocket server with simple front-end part.
 
 ## In future:
 - different rooms
-- user nicknames
-- emoji
+- user nicknames (DONE)
 - chat history
