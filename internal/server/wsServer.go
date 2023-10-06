@@ -42,6 +42,11 @@ func (ws *WsServer) Serve() {
 		return
 	}
 
+	err = conn.WriteMessage(websocket.TextMessage, usernameMsg)
+	if err != nil {
+		log.Println("ERROR, Ошибка отправки данных о подключенном пользователе")
+	}
+
 	user := chat.NewUser(conn, ws.room, string(usernameMsg))
 	user.Room.Register <- user
 
