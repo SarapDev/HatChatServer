@@ -1,10 +1,22 @@
-# Chat server for Hat Game
+# Chat server for 
 
-It's part of my pet project with name "Hat Game"
+It's simple chat serve based on websocket connection
 
-It's simple GoLang websocket server with simple front-end part. 
+After connection to websocket connection we can start read from socket and write to the socket. 
+All users have nickname. To set nickname you shoud send string after connect to the socket
 
-## In future:
-- different rooms
-- user nicknames (DONE)
-- chat history
+All messages it's simple struct of Message that have 2 fields: nickname and message payload
+
+Example object of message:
+```
+{
+  "text": "some text",
+  "sender": "nickname"
+}
+```
+
+After client connect to the ws all ws users get notification about new user in chat room.
+
+## Routes 
+
+${{host}}/ws - work with websocket
